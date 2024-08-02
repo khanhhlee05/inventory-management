@@ -13,12 +13,15 @@ import {
 } from 'firebase/firestore'
 
 export default function Home() {
+  //set default for variables
   const [inventory, setInventory] = useState([])
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState("")
   const [totalNumberOfItems, setQuantity] = useState(0)
   const [myQuery, setQuery] = useState('')
 
+
+  //use to display the inventory
   const updateInventory = async (searchQuery = '') => {
     const snapshot = query(collection(firestore, "inventory"))
     const docs = await getDocs(snapshot)
@@ -34,6 +37,8 @@ export default function Home() {
     console.log(inventoryList)
   }
 
+
+  //remove item
   const removeItem = async (item) => {
     const docRef = doc(collection(firestore, "inventory"), item)
     const docSnap = await getDoc(docRef)
@@ -51,6 +56,8 @@ export default function Home() {
     await updateInventory()
   }
 
+
+  //add item
   const addItem = async (item, numbers) => {
     numbers == 0 ? numbers = 1 : numbers
     const docRef = doc(collection(firestore, "inventory"), item)
@@ -67,6 +74,8 @@ export default function Home() {
     await updateInventory()
   }
 
+
+  //initial
   useEffect(() => {
     updateInventory()
   }, [])
