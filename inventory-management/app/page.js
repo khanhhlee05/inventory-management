@@ -17,7 +17,7 @@ export default function Home() {
   const [inventory, setInventory] = useState([])
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState("")
-  const [totalNumberOfItems, setQuantity] = useState(0)
+  const [totalNumberOfItems, setQuantity] = useState(1)
   const [myQuery, setQuery] = useState('')
 
 
