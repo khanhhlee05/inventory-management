@@ -1,8 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField, IconButton } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, TextField, InputAdornment } from '@mui/material'
 import { firestore } from '@/firebase'
-import InputAdornment from '@mui/material/InputAdornment';
 import {
   collection,
   doc,
@@ -13,15 +12,12 @@ import {
   getDoc,
 } from 'firebase/firestore'
 
-
-
-
 export default function Home() {
   const [inventory, setInventory] = useState([])
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState("")
   const [totalNumberOfItems, setQuantity] = useState(0)
-  const [myQuery, setQuery] = useState('');
+  const [myQuery, setQuery] = useState('')
 
   const updateInventory = async (searchQuery = '') => {
     const snapshot = query(collection(firestore, "inventory"))
@@ -29,13 +25,12 @@ export default function Home() {
     const inventoryList = []
     docs.forEach((doc) => inventoryList.push({ name: doc.id, ...doc.data() }))
     if (searchQuery) {
-      const regex = new RegExp(searchQuery, 'i');
-      const filteredInventory = inventoryList.filter(item => regex.test(item.name));
-      setInventory(filteredInventory);
+      const regex = new RegExp(searchQuery, 'i')
+      const filteredInventory = inventoryList.filter(item => regex.test(item.name))
+      setInventory(filteredInventory)
     } else {
-      setInventory(inventoryList);
+      setInventory(inventoryList)
     }
-    setInventory(inventoryList)
     console.log(inventoryList)
   }
 
@@ -57,7 +52,7 @@ export default function Home() {
   }
 
   const addItem = async (item, numbers) => {
-
+    numbers == 0 ? numbers = 1 : numbers
     const docRef = doc(collection(firestore, "inventory"), item)
     const docSnap = await getDoc(docRef)
 
@@ -70,9 +65,7 @@ export default function Home() {
     }
 
     await updateInventory()
-
   }
-
 
   useEffect(() => {
     updateInventory()
@@ -80,7 +73,6 @@ export default function Home() {
 
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
-
 
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={"center"} alignItems="center" gap={2} flexDirection="column" bgcolor="#f5f5f5" padding={4}>
@@ -108,13 +100,13 @@ export default function Home() {
               label="Quantity"
               type="number"
               value={totalNumberOfItems}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={(e) => setQuantity(Number(e.target.value))}
               InputLabelProps={{
                 shrink: true,
                 required: true,
               }}
               InputProps={{
-                inputProps: { min: 0 },
+                inputProps: { min: 1 },
                 endAdornment: <InputAdornment position="end"> </InputAdornment>,
               }}
               variant="outlined"
@@ -125,7 +117,7 @@ export default function Home() {
               onClick={() => {
                 addItem(itemName, totalNumberOfItems)
                 setItemName('')
-                setQuantity()
+                setQuantity(1)
                 handleClose()
               }}
             >
@@ -162,7 +154,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      updateInventory(myQuery) // Removed unnecessary calls to setItemName, setQuantity, handleClose
+                      updateInventory(myQuery)
                     }}
                   >
                     Search
@@ -170,12 +162,9 @@ export default function Home() {
                 </InputAdornment>
               ),
             }}
-            fullWidth // Added fullWidth to make the TextField span the full width
+            fullWidth
           />
         </Box>
-
-
-
 
         <Stack width="100%" height="300px" spacing={2} overflow="auto" padding={2}>
           {inventory.length === 0 ? (
@@ -191,34 +180,34 @@ export default function Home() {
                 No items found.
               </Typography>
             </Box>
-          ) : null}
-
-          {inventory.map(({ name, quantity }) => (
-            <Box
-              key={name}
-              width="100%"
-              minHeight="100px"
-              display="flex"
-              alignItems="center"
-              justifyContent="space-between"
-              bgcolor="#f0f0f0"
-              padding={2}
-              borderRadius={2}
-              boxShadow={1}
-            >
-              <Typography variant="h5" color="#333">
-                {name.charAt(0).toUpperCase() + name.slice(1)}
-              </Typography>
-              <Typography variant="h5" color="#333">
-                {quantity}
-              </Typography>
-              <Button variant="contained" color="secondary" onClick={() => removeItem(name)}>
-                Remove
-              </Button>
-            </Box>
-          ))}
+          ) : (
+            inventory.map(({ name, quantity }) => (
+              <Box
+                key={name}
+                width="100%"
+                minHeight="100px"
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                bgcolor="#f0f0f0"
+                padding={2}
+                borderRadius={2}
+                boxShadow={1}
+              >
+                <Typography variant="h5" color="#333">
+                  {name.charAt(0).toUpperCase() + name.slice(1)}
+                </Typography>
+                <Typography variant="h5" color="#333">
+                  {quantity}
+                </Typography>
+                <Button variant="contained" color="secondary" onClick={() => removeItem(name)}>
+                  Remove
+                </Button>
+              </Box>
+            ))
+          )}
         </Stack>
       </Box>
     </Box>
-  );
+  )
 }
