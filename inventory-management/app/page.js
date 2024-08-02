@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, TextField, IconButton } from '@mui/material'
 import { firestore } from '@/firebase'
+import InputAdornment from '@mui/material/InputAdornment';
 import {
   collection,
   doc,
@@ -13,16 +14,27 @@ import {
 } from 'firebase/firestore'
 
 
+
+
 export default function Home() {
   const [inventory, setInventory] = useState([])
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState("")
+  const [totalNumberOfItems, setQuantity] = useState(0)
+  const [myQuery, setQuery] = useState('');
 
-  const updateInventory = async () => {
+  const updateInventory = async (searchQuery = '') => {
     const snapshot = query(collection(firestore, "inventory"))
     const docs = await getDocs(snapshot)
     const inventoryList = []
-    docs.forEach((doc) => inventoryList.push({name: doc.id, ...doc.data()}))
+    docs.forEach((doc) => inventoryList.push({ name: doc.id, ...doc.data() }))
+    if (searchQuery) {
+      const regex = new RegExp(searchQuery, 'i');
+      const filteredInventory = inventoryList.filter(item => regex.test(item.name));
+      setInventory(filteredInventory);
+    } else {
+      setInventory(inventoryList);
+    }
     setInventory(inventoryList)
     console.log(inventoryList)
   }
@@ -31,31 +43,34 @@ export default function Home() {
     const docRef = doc(collection(firestore, "inventory"), item)
     const docSnap = await getDoc(docRef)
 
-    if (docSnap.exists()){
-      const {quantity} = docSnap.data()
-      if (quantity === 1){
+    if (docSnap.exists()) {
+      const { quantity } = docSnap.data()
+      if (quantity === 1) {
         await deleteDoc(docRef)
-        console.log("Document successfully deleted!") 
+        console.log("Document successfully deleted!")
       } else {
-        await setDoc(docRef, {quantity: quantity - 1})
+        await setDoc(docRef, { quantity: quantity - 1 })
       }
     }
 
     await updateInventory()
   }
 
-  const addItem = async (item) => {
+  const addItem = async (item, numbers) => {
+
     const docRef = doc(collection(firestore, "inventory"), item)
     const docSnap = await getDoc(docRef)
 
-    if (docSnap.exists()){
-      const {quantity} = docSnap.data()
-      await setDoc(docRef, {quantity : quantity + 1})
-      } else {
-        await setDoc(docRef, {quantity : 1})
-      }
+    if (docSnap.exists()) {
+      const { quantity } = docSnap.data()
+      !numbers || numbers === 0 ? numbers = 1 : numbers
+      await setDoc(docRef, { quantity: quantity + numbers })
+    } else {
+      await setDoc(docRef, { quantity: numbers })
+    }
 
     await updateInventory()
+
   }
 
 
@@ -66,34 +81,56 @@ export default function Home() {
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
 
- 
+
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={"center"} alignItems="center" gap={2} flexDirection="column" bgcolor="#f5f5f5" padding={4}>
       <Modal open={open} onClose={handleClose}>
-        <Box position="absolute" top="50%" left="50%" width={400} 
-        bgcolor="white" border="2px solid #000" 
-        boxShadow={24} p={4} display="flex" flexDirection="column" gap={3} sx={{transform: "translate(-50%, -50%)" }}>
-          
+        <Box position="absolute" top="50%" left="50%" width={400}
+          bgcolor="white" border="2px solid #000"
+          boxShadow={24} p={4} display="flex" flexDirection="column" gap={3} sx={{ transform: "translate(-50%, -50%)" }}>
+
           <Typography variant="h6">Add Item</Typography>
           <Stack width="100%" direction="row" gap={2}>
-          <TextField
-            id="outlined-basic"
-            label="Item"
-            variant="outlined"
-            fullWidth
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
-          />
-          <Button
-            variant="contained"
-            onClick={() => {
-              addItem(itemName)
-              setItemName('')
-              handleClose()
-            }}
-          >
-            Add
-          </Button>
+            <TextField
+              id="outlined-basic"
+              label="Item"
+              variant="outlined"
+              fullWidth
+              value={itemName}
+              InputLabelProps={{
+                shrink: true,
+                required: true,
+              }}
+              onChange={(e) => setItemName(e.target.value)}
+            />
+
+            <TextField
+              label="Quantity"
+              type="number"
+              value={totalNumberOfItems}
+              onChange={(e) => setQuantity(e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+                required: true,
+              }}
+              InputProps={{
+                inputProps: { min: 0 },
+                endAdornment: <InputAdornment position="end"> </InputAdornment>,
+              }}
+              variant="outlined"
+            />
+
+            <Button
+              variant="contained"
+              onClick={() => {
+                addItem(itemName, totalNumberOfItems)
+                setItemName('')
+                setQuantity()
+                handleClose()
+              }}
+            >
+              Add
+            </Button>
           </Stack>
         </Box>
       </Modal>
@@ -112,8 +149,50 @@ export default function Home() {
             Inventory Items
           </Typography>
         </Box>
-     
+
+        <Box width="100%" display="flex" alignItems="center" justifyContent="center" padding={2}>
+          <TextField
+            variant='outlined'
+            placeholder='Search'
+            value={myQuery}
+            onChange={(e) => setQuery(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      updateInventory(myQuery) // Removed unnecessary calls to setItemName, setQuantity, handleClose
+                    }}
+                  >
+                    Search
+                  </Button>
+                </InputAdornment>
+              ),
+            }}
+            fullWidth // Added fullWidth to make the TextField span the full width
+          />
+        </Box>
+
+
+
+
         <Stack width="100%" height="300px" spacing={2} overflow="auto" padding={2}>
+          {inventory.length === 0 ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              width="100%"
+              height="100%"
+              textAlign="center"
+            >
+              <Typography variant="h4" color="textSecondary">
+                No items found.
+              </Typography>
+            </Box>
+          ) : null}
+
           {inventory.map(({ name, quantity }) => (
             <Box
               key={name}
@@ -134,7 +213,7 @@ export default function Home() {
                 {quantity}
               </Typography>
               <Button variant="contained" color="secondary" onClick={() => removeItem(name)}>
-                Remove 
+                Remove
               </Button>
             </Box>
           ))}
