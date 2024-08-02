@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Box, Stack, Typography, Button, Modal, TextField, InputAdornment } from '@mui/material'
 import { firestore } from '@/firebase'
 import {
@@ -11,6 +11,9 @@ import {
   deleteDoc,
   getDoc,
 } from 'firebase/firestore'
+//testing purposes only
+//import React, { useRef } from "react";
+import { Camera } from "react-camera-pro";
 
 export default function Home() {
   //set default for variables
@@ -19,6 +22,10 @@ export default function Home() {
   const [itemName, setItemName] = useState("")
   const [totalNumberOfItems, setQuantity] = useState(1)
   const [myQuery, setQuery] = useState('')
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+
+
 
 
   //use to display the inventory
@@ -37,6 +44,29 @@ export default function Home() {
     console.log(inventoryList)
   }
 
+  const Photos = () => {
+    const camera = useRef(null);
+    const [image, setImage] = useState(null);
+
+    return (
+      <div>
+        <Camera ref={camera} aspectRatio={16 / 9} />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            if (camera.current) {
+              setImage(camera.current.takePhoto());
+            }
+          }}
+          style={{ marginTop: '10px' }}
+        >
+          Take Photo
+        </Button>
+        {image && <img src={image} alt="Taken photo" style={{ marginTop: '10px' }} />}
+      </div>
+    );
+  };
 
   //remove item
   const removeItem = async (item) => {
@@ -82,6 +112,13 @@ export default function Home() {
 
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
+
+
+  const handlePhotoModalOpen = () => setPhotoModalOpen(true);
+  const handlePhotoModalClose = () => setPhotoModalOpen(false);
+
+
+
 
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={"center"} alignItems="center" gap={2} flexDirection="column" bgcolor="#f5f5f5" padding={4}>
@@ -135,7 +172,30 @@ export default function Home() {
           </Stack>
         </Box>
       </Modal>
-      <Button variant="contained" color="primary" onClick={handleOpen}>ADD NEW ITEM</Button>
+      
+      <Modal open={photoModalOpen} onClose={handlePhotoModalClose}>
+        <Box position="absolute" top="50%" left="50%" width={800} height={800}
+          bgcolor="white" border="2px solid #000"
+          boxShadow={24} p={4} display="flex" flexDirection="column" gap={3} sx={{ transform: "translate(-50%, -50%)" }}>
+
+          <Typography variant="h6">Take Photo</Typography>
+          <Photos />
+          <Button variant="contained" onClick={handlePhotoModalClose} style={{ marginTop: '10px' }}>Close</Button>
+        </Box>
+      </Modal>
+
+      <Box display="flex" justifyContent="center" alignItems="center">
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" color="primary" onClick={handleOpen}>
+            ADD BY NAME
+          </Button>
+          <Button variant="contained" onClick={handlePhotoModalOpen}>
+            ADD BY PHOTO
+          </Button>
+        </Stack>
+      </Box>
+
+
       <Box border="1px solid #333" width="800px" borderRadius={4} boxShadow={3} bgcolor="#fff">
         <Box
           width="100%"
